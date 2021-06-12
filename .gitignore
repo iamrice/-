@@ -1,3 +1,15 @@
+# file
+investigation.md
+
+# folder
+/binlog2sql-master
+
+# document
+*.doc
+*.docx
+*.pdf
+*.pptx
+
 # Prerequisites
 *.d
 
