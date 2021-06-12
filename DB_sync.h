@@ -1,5 +1,3 @@
-#ifndef DB_SYNC_H
-#define DB_SYNC_H
 
 /*
 	Dependency:
@@ -20,8 +18,69 @@
 			1. 当源端数据库有变动时，根据“用来查询的关键字” 去匹配目标端的内容
 			2. 根据源端的操作类型，分别做 insert，delete，update操作
 		3. 调用 DB operator，将第三步的解析结果传入
-	Test:
-		1. 
 */
+
+#ifndef DB_SYNC_H
+#define DB_SYNC_H
+#include "DB_oprator.h"
+#include "DB_data_structure.h"
+#include <vector>
+
+class DB_sync
+{
+public:
+	DB_sync();
+
+	~DB_sync();
+
+	bool addRule();
+	/*
+		TODO:
+			增加两个数据库之间的关系，加入 relations 变量中。
+		Args:
+			参数很多，就是实例化一个 db_relationship 的所有内容，因为这部分是由用户输入，所以输入参数是零散的，所以这个函数中需要用 db_relationship 来规范化。
+		Return:
+			操作是否成功
+	*/
+
+	bool sync();
+
+private:
+	std::vector<db_relationship*> relations; // 存储数据库对应关系
+	DB_oprator* target_db; // 目标数据库
+	
+	std::vector<primary_key*> search_items(db_change*);
+	/*
+		TODO:
+			根据 db_change，以及 db_relationship 中用于查询的关键字段，来查询那些表项需要同步，因为考虑到目标端和源端不一定是一一对应的关系，所以用一个vector 来存储。
+		Args:
+			db_change: 源端的一个变化
+		Return:
+			primary_keys: 目标端匹配到的表项的主键的值
+	*/
+
+	db_to_write* parse_change(db_change*);
+	/*
+		TODO:
+			根据 db_change，以及 db_relationship 中的更新字段，只过滤出需要修改的内容，减少数据传输，也让 db_operator 更好操作
+		Args:
+			db_change: 源端的一个变化
+		Return:
+			db_to_write： 需要修改的内容
+	*/
+
+	bool sync_item(db_to_write,primary_key*,int);
+	/*
+		TODO:
+			调用 db_operator, 同步内容。注：search_item 中可能返回多个 primary_key，但此函数只处理一个，因此如果有多个匹配表项需要多次调用此函数
+		Args:
+			db_to_write： 需要修改的内容
+			primary_keys: 目标端匹配到的表项的主键的值
+			int：同步的类型，1 代表 insert，2 代表 delete，3 代表 update
+		Return:
+			bool：是否成功
+	*/
+
+};
 
 #endif
