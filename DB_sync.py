@@ -91,12 +91,9 @@ class postgresql_operator:
 class mysql_operator:
 	'''
 		TODO:
-			实现五个函数
+			实现两个函数
 			1. 构造函数：创建数据库连接
-			2. insert
-			3. select
-			4. delete
-			5. update
+			2. select
 	'''
 	pass
 
