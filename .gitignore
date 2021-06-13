@@ -1,5 +1,12 @@
 # file
 investigation.md
+常用命令
+
+# cpp
+*.cpp
+*.h
+makefile
+
 
 # folder
 /binlog2sql-master
