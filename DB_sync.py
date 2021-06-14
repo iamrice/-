@@ -1,5 +1,5 @@
 
-def get_binlog_parser(host='localhost',port='3306',user='root',password='root',database,table):
+def get_binlog_parser(host='localhost',port='3306',user='root',password='root',database='',table=''):
 	'''
 		TODO:
 			1. 查找最新的一个 binlog 文件
@@ -97,36 +97,38 @@ class mysql_operator:
 	'''
 	pass
 
+import time
+
 def main():
 	# 初始化解析器、操作器
 	parser = get_binlog_parser()
 	target_db = postgresql_operator()
 	source_db = mysql_operator()
 	# 初始化同步规则(在1.0 版本只考虑一个规则，后续视情况拓展)
-	sync_rule = {'search_keys'=[],'update_keys'=[]} # e.g. {'search_keys':[{'course':'myCourse'}],update_keys:[{'time':'course_time'}]} 每一个键值对的键代表源端的key，值代表目标端的key
+	sync_rule = {'search_keys':[],'update_keys':[]} # e.g. {'search_keys':[{'course':'myCourse'}],update_keys:[{'time':'course_time'}]} 每一个键值对的键代表源端的key，值代表目标端的key
 	# 初始化读取位置
 	start_pos = 0
 	end_pos = 0
 	# 初始化同步间隔(ms)
-	sync_interval = 60000
+	sync_interval = 600
 
 	# 开始
-	while(True){
+	while(True):
 		# 检查更新
 		check_value = check_binlog_update(parser, end_pos)
 		if(check_value == 0):
 			break
 		# 解析更新内容
-		start_pos = end_pos;
-		end_pos = check_value;
+		start_pos = end_pos
+		end_pos = check_value
 		modify_units = parse_binlog(parser, start_pos, end_pos)
 		# 过滤,同步
 		for unit in modify_units:
 			update_unit = filter_sync_content(sync_rule,unit,target_db)
 			sync_to_target_db(update_unit,target_db)
 		# 等待下一次查询
-		sleep(sync_interval)
-	}
+		time.sleep(sync_interval)
+	
 	
 
 if __name__ == '__main__':
