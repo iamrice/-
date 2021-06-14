@@ -71,7 +71,7 @@ def sync_to_target_db(update_unit, target_db):
 	'''
 	pass
 
-def exit():
+def Exit(source_db):
 	'''
 		TODO:
 			通过 flush log 命令刷新 binlog，使得下一次访问时 binlog 是一个全新的日志文件。
@@ -94,6 +94,14 @@ class postgresql_operator:
 	'''
 	pass
 
+class mysql_operator:
+	'''
+		TODO:
+			实现两个函数
+			1. 构造函数：创建数据库连接
+			2. flush binlog
+	'''
+	pass
 
 import time
 
@@ -101,6 +109,7 @@ def main():
 	# 初始化解析器、操作器
 	parser = get_binlog_parser()
 	target_db = postgresql_operator()
+	source_db = mysql_operator()
 	# 初始化同步规则(在1.0 版本只考虑一个规则，后续视情况拓展)
 	sync_rule = {'search_keys':[],'update_keys':[]} # e.g. {'search_keys':[{'course':'myCourse'}],update_keys:[{'time':'course_time'}]} 每一个键值对的键代表源端的key，值代表目标端的key
 	# 初始化读取位置
@@ -109,24 +118,28 @@ def main():
 	# 初始化同步间隔(ms)
 	sync_interval = 600
 
-	# 开始
+
+	# 定时版本
 	while(True):
 		# 检查更新
 		check_value = check_binlog_update(parser, end_pos)
-		if(check_value == 0):
-			break
-		# 解析更新内容
-		start_pos = end_pos
-		end_pos = check_value
-		modify_units = parse_binlog(parser, start_pos, end_pos)
-		# 过滤,同步
-		for unit in modify_units:
-			update_unit = filter_sync_content(sync_rule,unit,target_db)
-			sync_to_target_db(update_unit,target_db)
+		if(check_value > 0):
+			# 解析更新内容
+			start_pos = end_pos
+			end_pos = check_value
+			modify_units = parse_binlog(parser, start_pos, end_pos)
+			# 过滤,同步
+			for unit in modify_units:
+				update_unit = filter_sync_content(sync_rule,unit,target_db)
+				sync_to_target_db(update_unit,target_db)
+
 		# 等待下一次查询
 		time.sleep(sync_interval)
+
+	# 命令版本
 	
 	
+	Exit(source_db)
 
 if __name__ == '__main__':
 	main()
