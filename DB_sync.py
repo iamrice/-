@@ -118,8 +118,19 @@ def main():
 	# 初始化同步间隔(ms)
 	sync_interval = 600
 
+	'''
+	# 命令行版本：每输入一次 run 同步一次
+		TODO:
+			完成以下命令行解析
+			1. set_source -hlocalhost -P3306 -uadmin -p'admin' -dschool -tcourse
+			2. set_target -h188.122.1.1 -P3306 -uroot -p'root' -dstudent -tmycourse 
+			3. add_rule -s CID CourseID -u CID CourseID name CourseName
+			4. run
+			5. exit
 
-	# 定时版本
+	'''
+
+	# 定时版本：定时同步
 	while(True):
 		# 检查更新
 		check_value = check_binlog_update(parser, end_pos)
@@ -135,9 +146,6 @@ def main():
 
 		# 等待下一次查询
 		time.sleep(sync_interval)
-
-	# 命令版本
-	
 	
 	Exit(source_db)
 
