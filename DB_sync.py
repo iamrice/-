@@ -28,6 +28,12 @@ def parse_binlog(parser, start_pos, end_pos):
 	'''
 		TODO:
 			1. 使用 parser 获取数据库更新的内容
+			注：binlog 解析器只能解析出命令，并不能解析出整个表项，所以需要对那个项目进行改造。
+			改造方法是，在 binlog2sql_util.py 文件117行的 if 条件下，读取 row 的内容
+			对于 insert 操作，读取 row.values
+			对于 update 操作，读取 row.before_values 和 row.after_values
+			对于 delete 操作，读取 row.values
+			
 		Args:
 			1. 解析器，起始解析位置，终止解析位置
 		Return:
