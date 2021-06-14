@@ -10,6 +10,7 @@ makefile
 
 # folder
 /binlog2sql-master
+/__pycache__
 
 # document
 *.doc
