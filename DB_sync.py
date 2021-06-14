@@ -94,14 +94,6 @@ class postgresql_operator:
 	'''
 	pass
 
-class mysql_operator:
-	'''
-		TODO:
-			实现两个函数
-			1. 构造函数：创建数据库连接
-			2. select
-	'''
-	pass
 
 import time
 
@@ -109,7 +101,6 @@ def main():
 	# 初始化解析器、操作器
 	parser = get_binlog_parser()
 	target_db = postgresql_operator()
-	source_db = mysql_operator()
 	# 初始化同步规则(在1.0 版本只考虑一个规则，后续视情况拓展)
 	sync_rule = {'search_keys':[],'update_keys':[]} # e.g. {'search_keys':[{'course':'myCourse'}],update_keys:[{'time':'course_time'}]} 每一个键值对的键代表源端的key，值代表目标端的key
 	# 初始化读取位置
