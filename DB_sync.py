@@ -40,7 +40,18 @@ def parse_binlog(parser, start_pos, end_pos):
 			一个数组，数组的成员是 modify_unit
 			modify_unit定义为 {'modify_type': INSERT/DELETE/UPDATE, 'content': [...#该表项的所有内容]}
 	'''
-	pass
+	modify_units = []
+	events = parser.process_binlog()
+	for binlog_event,row in events:
+		if isinstance(binlog_event, WriteRowsEvent):
+			modify_units.append({'modify_type':'INSERT','values':row['after_values']})
+		if isinstance(binlog_event, DeleteRowsEvent):
+			modify_units.append({'modify_type':'DELETE','values':row['before_values']})
+		if isinstance(binlog_event, UpdateRowsEvent):
+			modify_units.append({'modify_type':'UPDATE','before_values':row['before_values'],'after_values':row['after_values']})
+
+	return modify_units
+
 
 def filter_sync_content(rule, modify_unit, target_db):
 	'''
@@ -57,7 +68,26 @@ def filter_sync_content(rule, modify_unit, target_db):
 			e.g.{type:'insert',update_items:[],update_content:{'course':'math','time':'monday'}}
 			e.g.{type:'delete',update_items:['001','008'],update_content:{}}
 	'''
-	pass
+	update_items = []
+	update_content = {}
+
+	if modify_unit['modify_type']=='DELETE' or modify_unit['modify_type']=='UPDATE':
+		search_query = 'select ' + target_db.primary_key + ' from ' + target_db.table
+		first_item = True
+		for source_key,target_key in rule['search_keys'].items():
+			if first_item==True:
+				search_query += ' where '
+				first_item = False
+			else:
+				search_query += ' and '
+			search_query += target_key + ' = ' + modify_unit['before_values'][source_key]
+		update_items = target_db.select(search_query)
+
+	if modify_unit['modify_type']=='INSERT' or modify_unit['modify_type']=='UPDATE':
+		for source_key,target_key in rule['search_keys'].items():
+			update_content[target_key] = modify_unit['after_values'][source_key]
+
+	return {'type':modify_unit['modify_type'],'update_items':update_items,'update_content':update_content}
 
 def sync_to_target_db(update_unit, target_db):
 	'''
@@ -91,6 +121,10 @@ class postgresql_operator:
 			3. select
 			4. delete
 			5. update
+			类成员：
+			1. database
+			2. table
+			3. primary_key
 	'''
 	pass
 
@@ -122,11 +156,11 @@ def main():
 	# 命令行版本：每输入一次 run 同步一次
 		TODO:
 			完成以下命令行解析
-			1. set_source -hlocalhost -P3306 -uadmin -p'admin' -dschool -tcourse
-			2. set_target -h188.122.1.1 -P3306 -uroot -p'root' -dstudent -tmycourse 
-			3. add_rule -s CID CourseID -u CID CourseID name CourseName
-			4. run
-			5. exit
+			1. set_source -hlocalhost -P3306 -uadmin -p'admin' -dschool -tcourse # 创建 source_db
+			2. set_target -h188.122.1.1 -P3306 -uroot -p'root' -dstudent -tmycourse # 创建 target_db
+			3. add_rule -s CID CourseID -u CID CourseID name CourseName # 加入 sync_rule 中
+			4. run # 复制 while 循环内的那一段
+			5. exit # 调用 Exit 函数
 
 	'''
 
@@ -145,9 +179,9 @@ def main():
 				sync_to_target_db(update_unit,target_db)
 
 		# 等待下一次查询
-		time.sleep(sync_interval)
-	
+		time.sleep(sync_interval)	
 	Exit(source_db)
 
 if __name__ == '__main__':
 	main()
+	

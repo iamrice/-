@@ -6,7 +6,22 @@
 #### 开发目标
 1. 以 MySQL 为源端，以 PostGreSQL 为目标端，做单向同步。
 2. 主要应用与读写分离的主从数据库场景
-	1. 主数据用于写入，从数据库（一个或多个）用于读取。
-	2. 主数据库表项丰富详细，而从数据库只需要其中的一部分内容; 从数据库的除了主键之外，其他字段全部来自主数据库。
-	3. 主数据库和从数据库的主键不相同，主数据库的一个表项可能对应从数据库的多个表项。
+
+#### 测试场景
+
+| 源端: 平台课程信息 | 源端：教师      | 目标端：高三年级课程查询 |
+| ------------------ | --------------- | ------------------------ |
+| id(primary key)    | id(primary key) | course_id(primary key)   |
+| grade              | name            | course_time              |
+| time               | photo           | course_name              |
+| name               |                 | teacher_photo            |
+| teacher_id         |                 | teacher_name             |
+|                    |                 |                          |
+|                    |                 |                          |
+
+
+
+#### 感谢
+
+[binlog2sql]: https://github.com/danfengcao/binlog2sql
 

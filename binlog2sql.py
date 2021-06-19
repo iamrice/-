@@ -63,6 +63,7 @@ class Binlog2sql(object):
                 raise ValueError('missing server_id in %s:%s' % (self.conn_setting['host'], self.conn_setting['port']))
 
     def process_binlog(self):
+        dml_events = []
         stream = BinLogStreamReader(connection_settings=self.conn_setting, server_id=self.server_id,
                                     log_file=self.start_file, log_pos=self.start_pos, only_schemas=self.only_schemas,
                                     only_tables=self.only_tables, resume_stream=True, blocking=True)
@@ -107,6 +108,7 @@ class Binlog2sql(object):
                     for row in binlog_event.rows:
                         sql = concat_sql_from_binlog_event(cursor=cursor, binlog_event=binlog_event, no_pk=self.no_pk,
                                                            row=row, flashback=self.flashback, e_start_pos=e_start_pos)
+                        dml_events.append([binlog_event,row])
                         if self.flashback:
                             f_tmp.write(sql + '\n')
                         else:
@@ -121,7 +123,8 @@ class Binlog2sql(object):
             f_tmp.close()
             if self.flashback:
                 self.print_rollback_sql(filename=tmp_file)
-        return True
+
+        return dml_events
 
     def print_rollback_sql(self, filename):
         """print rollback sql from tmp_file"""
@@ -140,7 +143,7 @@ class Binlog2sql(object):
     def __del__(self):
         pass
 
-
+'''
 if __name__ == '__main__':
     #args = command_line_args(sys.argv[1:])
     args = {'host':'localhost', 'user':'root', 'password':'root', 'port':3306, 
@@ -160,3 +163,4 @@ if __name__ == '__main__':
     print("binlog2sql_process_binlog")
     binlog2sql.process_binlog()
 
+'''

@@ -194,6 +194,7 @@ def concat_sql_from_binlog_event(cursor, binlog_event, row=None, e_start_pos=Non
     return sql
 
 
+
 def generate_sql_pattern(binlog_event, row=None, flashback=False, no_pk=False):
     template = ''
     values = []
