@@ -14,10 +14,10 @@
 | id(primary key)    | id(primary key) | course_id(primary key)   |
 | grade              | name            | course_time              |
 | time               | photo           | course_name              |
-| name               |                 | teacher_photo            |
-| teacher_id         |                 | teacher_name             |
-|                    |                 |                          |
-|                    |                 |                          |
+| name               | introduction    | teacher_photo            |
+| teacher_id         | private_data    | teacher_name             |
+|                    |                 | teacher_id               |
+|                    |                 | teacher_intro            |
 
 
 
