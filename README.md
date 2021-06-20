@@ -41,5 +41,5 @@ psql -U 用户名 数据库名< xxx\demo_target.sql # xxx 替换为项目路径
 
 #### 感谢
 
-1. <a herf="https://github.com/danfengcao/binlog2sql">binlog2sql</a>
 2. kettle
+2. [binlog2sql](https://github.com/danfengcao/binlog2sql)
