@@ -12,12 +12,24 @@
 | 源端: 平台课程信息 | 源端：教师      | 目标端：高三年级课程查询 |
 | ------------------ | --------------- | ------------------------ |
 | id(primary key)    | id(primary key) | course_id(primary key)   |
-| grade              | name            | course_time              |
-| time               | photo           | course_name              |
-| name               | introduction    | teacher_photo            |
-| teacher_id         | private_data    | teacher_name             |
+| grade              | name            | course_start_time        |
+| name               | introduction    | course_end_time          |
+| start_time         | photo           | course_name              |
+| end_time           | private_data    | teacher_photo            |
+| teacher_id         |                 | teacher_name             |
 |                    |                 | teacher_id               |
 |                    |                 | teacher_intro            |
+
+#### Usage
+
+##### 导入数据库 demo
+
+```
+mysql -h 服务器地址 -u 用户名 -p 密码
+create database demo_1;
+use demo_1;
+source xxx\demo_1.sql; # xxx 替换为项目路径
+```
 
 
 
