@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.25, for Win64 (x86_64)
 --
--- Host: localhost    Database: course
+-- Host: localhost    Database: db01
 -- ------------------------------------------------------
 -- Server version	8.0.25
 
@@ -46,35 +46,6 @@ INSERT INTO `course` VALUES (1,'Math','senior',1,'2021-09-01','2022-01-30'),(2,'
 UNLOCK TABLES;
 
 --
--- Table structure for table `senior_course`
---
-
-DROP TABLE IF EXISTS `senior_course`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `senior_course` (
-  `course_id` int unsigned NOT NULL,
-  `teacher_id` int unsigned NOT NULL,
-  `course_name` varchar(100) NOT NULL,
-  `course_start_time` date DEFAULT NULL,
-  `course_end_time` date DEFAULT NULL,
-  `teacher_name` varchar(100) NOT NULL,
-  `teacher_photo` varchar(100) DEFAULT NULL,
-  `teacher_introduction` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`course_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `senior_course`
---
-
-LOCK TABLES `senior_course` WRITE;
-/*!40000 ALTER TABLE `senior_course` DISABLE KEYS */;
-/*!40000 ALTER TABLE `senior_course` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `teacher`
 --
 
@@ -110,4 +81,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-06-20 11:35:41
+-- Dump completed on 2021-06-20 13:32:41

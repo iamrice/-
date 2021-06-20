@@ -28,13 +28,13 @@
 mysql -h 服务器地址 -u 用户名 -p 密码
 create database 数据库名;
 use 数据库名;
-source xxx\demo_mysql.sql; # xxx 替换为项目路径
+source xxx\demo_source.sql; # xxx 替换为项目路径
 ```
 
 ##### 导入目标数据库(postgresql) demo
 
 ```
-psql -U 用户名 数据库名< xxx\demo_psql.sql # xxx 替换为项目路径
+psql -U 用户名 数据库名< xxx\demo_target.sql # xxx 替换为项目路径
 ```
 
 
