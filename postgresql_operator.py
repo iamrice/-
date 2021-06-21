@@ -4,7 +4,7 @@ class postgresql_operator:
 
     def __init__(self):
         self.conn = psycopg2.connect(database="postgres", user="postgres", password="123", host="127.0.0.1", port="5432")
-        #test 以下可删除
+        #test 用于测试连接成功 以下可删除
         cursor = self.conn.cursor()
         sql = "SELECT VERSION()"
         cursor.execute(sql)
@@ -17,8 +17,12 @@ class postgresql_operator:
         """
         cursor = self.conn.cursor()
         sql ="""INSERT INTO student (id, address) VALUES (%s, %s)"""
-        cursor.execute(sql,params)
-        self.conn.commit()
+        try:
+            cursor.execute(sql,params)
+            self.conn.commit()
+            print("Inserted successfully")
+        except psycopg2.Error as e:
+            print(e)
 
     def pgsSelect(self):
         """
