@@ -95,18 +95,3 @@ class postgresql_operator:
         """
         self.conn.close()
 
-
-
-
-
-
-#test
-po = postgresql_operator()
-po.pgsSelect()
-po.pgsSelectCond((2,))
-po.pgsInsert((5,'g',))
-po.pgsSelect()
-po.pgsUpdate("address",('h',5,))
-po.pgsSelect()
-po.pgsDelete((5,))
-po.pgsSelect()

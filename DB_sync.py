@@ -9,7 +9,21 @@ def get_binlog_parser(host='localhost',port='3306',user='root',password='root',d
 		Return:
 			1. parser
 	'''
-	pass
+	args = {'host':host, 'user':user, 'password':password, 'port':port, 
+	'start_file':'mysql-bin.000001', 'start_pos':4, 'end_file':'', 'end_pos':0, 
+	'start_time':'', 'stop_time':'', 'stop_never':False, 'help':False, 
+	'databases':[database], 'tables':[table], 'only_dml':False, 
+	'sql_type':['INSERT', 'UPDATE', 'DELETE'], 
+	'no_pk':False, 'flashback':False, 'back_interval':1.0}
+
+	conn_setting = {'host': args['host'], 'port': args['port'], 'user': args['user'], 'passwd': args['password'], 'charset': 'utf8'}
+
+	binlog2sql = Binlog2sql(connection_settings=conn_setting, start_file=args['start_file'], start_pos=args['start_pos'],
+	                    end_file=args['end_file'], end_pos=args['end_pos'], start_time=args['start_time'],
+	                    stop_time=args['stop_time'], only_schemas=args['databases'], only_tables=args['tables'],
+	                    no_pk=args['no_pk'], flashback=args['flashback'], stop_never=args['stop_never'],
+	                    back_interval=args['back_interval'], only_dml=args['only_dml'], sql_type=args['sql_type'])
+	return binlog2sql;
 
 def check_binlog_update(parser, end_pos):
 	'''
@@ -86,7 +100,7 @@ def filter_sync_content(rule, modify_unit, target_db):
 	if modify_unit['modify_type']=='INSERT' or modify_unit['modify_type']=='UPDATE':
 		for source_key,target_key in rule['search_keys'].items():
 			update_content[target_key] = modify_unit['after_values'][source_key]
-
+ 
 	return {'type':modify_unit['modify_type'],'update_items':update_items,'update_content':update_content}
 
 def sync_to_target_db(update_unit, target_db):
@@ -98,8 +112,32 @@ def sync_to_target_db(update_unit, target_db):
 			2. target_db
 		Return:
 			none
-	'''
-	pass
+	'''    
+	updateItem = []
+	updateContent = []
+
+	if update_unit['type'] == 'update':
+		updateItems = update_unit['update_items']
+		updateContent = update_unit['update_content']
+		for i in updateItems:
+		for j in updateContent:
+			cond = updateContent[j]
+				target_db.pgsUpdate(j,(cond,i))
+
+	elif update_unit['type'] == 'insert':
+		updateItem = update_unit['update_items']
+		paramsTemp = []
+		for i in updateItem:
+			paramsTemp.append(updateItem[i])
+		params = tuple(paramsTemp)
+		target_db.pgsInsert(params)
+
+	else update_unit['type'] == 'delete':
+		updateContent = update_unit['update_content']
+		for i in updateContent:
+			target_db.pgsDelete(i)
+
+
 
 def Exit(source_db):
 	'''
@@ -112,21 +150,6 @@ def Exit(source_db):
 	'''
 	pass
 
-class postgresql_operator:
-	'''
-		TODO:
-			实现五个函数
-			1. 构造函数：创建数据库连接
-			2. insert
-			3. select
-			4. delete
-			5. update
-			类成员：
-			1. database
-			2. table
-			3. primary_key
-	'''
-	pass
 
 class mysql_operator:
 	'''
@@ -138,6 +161,7 @@ class mysql_operator:
 	pass
 
 import time
+from postgresql_operator import postgresql_operator
 
 def main():
 	# 初始化解析器、操作器
@@ -152,35 +176,38 @@ def main():
 	# 初始化同步间隔(ms)
 	sync_interval = 600
 
-	'''
-	# 命令行版本：每输入一次 run 同步一次
-		TODO:
-			完成以下命令行解析
-			1. set_source -hlocalhost -P3306 -uadmin -p'admin' -dschool -tcourse # 创建 source_db
-			2. set_target -h188.122.1.1 -P3306 -uroot -p'root' -dstudent -tmycourse # 创建 target_db
-			3. add_rule -s CID CourseID -u CID CourseID name CourseName # 加入 sync_rule 中
-			4. run # 复制 while 循环内的那一段
-			5. exit # 调用 Exit 函数
 
-	'''
 
 	# 定时版本：定时同步
+	print("\n")
+	print("WELCOME TO THE DATABASE SYNCHRONIZATION TOOL!")
+	print("You can enter 'help' to get the usage of all the commands.\n")
 	while(True):
-		# 检查更新
-		check_value = check_binlog_update(parser, end_pos)
-		if(check_value > 0):
-			# 解析更新内容
-			start_pos = end_pos
-			end_pos = check_value
-			modify_units = parse_binlog(parser, start_pos, end_pos)
-			# 过滤,同步
-			for unit in modify_units:
-				update_unit = filter_sync_content(sync_rule,unit,target_db)
-				sync_to_target_db(update_unit,target_db)
+		com = input("DB Sync tool@SCUT:")
+		if com == "help":
+			print("Commands:")
+			print("help   ---   show help menu ")
+			print("run    ---   run the synchronization ") 
+			print("exit   ---   exit the tool ")
 
-		# 等待下一次查询
-		time.sleep(sync_interval)	
-	Exit(source_db)
+		elif com == "run":
+			check_value = check_binlog_update(parser, end_pos)
+			if(check_value > 0):
+				# 解析更新内容
+				start_pos = end_pos
+				end_pos = check_value
+				modify_units = parse_binlog(parser, start_pos, end_pos)
+				# 过滤,同步
+				for unit in modify_units:
+					update_unit = filter_sync_content(sync_rule,unit,target_db)
+					sync_to_target_db(update_unit,target_db)
+
+			# 等待下一次查询
+			time.sleep(sync_interval)
+		else:
+			break;
+		Exit(source_db)
+
 
 if __name__ == '__main__':
 	main()
