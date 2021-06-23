@@ -13,7 +13,6 @@ def sync_to_target_db(update_unit, target_db):
 
     elif update_unit['type'] == 'insert':
         updateContent = update_unit['update_content']
-        print(updateContent)
         paramsTemp = []
         for i in updateContent:
             paramsTemp.append(updateContent[i])
