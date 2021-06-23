@@ -86,7 +86,7 @@ def filter_sync_content(rule, modify_unit, target_db):
 	if modify_unit['modify_type']=='INSERT' or modify_unit['modify_type']=='UPDATE':
 		for source_key,target_key in rule['search_keys'].items():
 			update_content[target_key] = modify_unit['after_values'][source_key]
-
+ 
 	return {'type':modify_unit['modify_type'],'update_items':update_items,'update_content':update_content}
 
 def sync_to_target_db(update_unit, target_db):
@@ -184,4 +184,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-	

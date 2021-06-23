@@ -103,7 +103,8 @@ class Binlog2sql(object):
                     sql = concat_sql_from_binlog_event(cursor=cursor, binlog_event=binlog_event,
                                                        flashback=self.flashback, no_pk=self.no_pk)
                     if sql:
-                        print(sql)
+                        # print(sql)
+                        pass
                 elif is_dml_event(binlog_event) and event_type(binlog_event) in self.sql_type:
                     for row in binlog_event.rows:
                         sql = concat_sql_from_binlog_event(cursor=cursor, binlog_event=binlog_event, no_pk=self.no_pk,
@@ -112,7 +113,8 @@ class Binlog2sql(object):
                         if self.flashback:
                             f_tmp.write(sql + '\n')
                         else:
-                            print(sql)
+                            # print(sql)
+                            pass
 
                 if not (isinstance(binlog_event, RotateEvent) or isinstance(binlog_event, FormatDescriptionEvent)):
                     last_pos = binlog_event.packet.log_pos
@@ -143,24 +145,23 @@ class Binlog2sql(object):
     def __del__(self):
         pass
 
-'''
-if __name__ == '__main__':
-    #args = command_line_args(sys.argv[1:])
-    args = {'host':'localhost', 'user':'root', 'password':'root', 'port':3306, 
-        'start_file':'mysql-bin.000001', 'start_pos':4, 'end_file':'', 'end_pos':0, 
-        'start_time':'', 'stop_time':'', 'stop_never':False, 'help':False, 
-        'databases':['db01'], 'tables':['runoob_tbl'], 'only_dml':False, 
-        'sql_type':['INSERT', 'UPDATE', 'DELETE'], 
-        'no_pk':False, 'flashback':False, 'back_interval':1.0}
 
-    conn_setting = {'host': args['host'], 'port': args['port'], 'user': args['user'], 'passwd': args['password'], 'charset': 'utf8'}
-    print(conn_setting)
-    binlog2sql = Binlog2sql(connection_settings=conn_setting, start_file=args['start_file'], start_pos=args['start_pos'],
-                            end_file=args['end_file'], end_pos=args['end_pos'], start_time=args['start_time'],
-                            stop_time=args['stop_time'], only_schemas=args['databases'], only_tables=args['tables'],
-                            no_pk=args['no_pk'], flashback=args['flashback'], stop_never=args['stop_never'],
-                            back_interval=args['back_interval'], only_dml=args['only_dml'], sql_type=args['sql_type'])
-    print("binlog2sql_process_binlog")
-    binlog2sql.process_binlog()
+# if __name__ == '__main__':
+#     #args = command_line_args(sys.argv[1:])
+#     args = {'host':'localhost', 'user':'root', 'password':'root', 'port':3306, 
+#         'start_file':'mysql-bin.000001', 'start_pos':4, 'end_file':'', 'end_pos':0, 
+#         'start_time':'', 'stop_time':'', 'stop_never':False, 'help':False, 
+#         'databases':['db01'], 'tables':['course'], 'only_dml':False, 
+#         'sql_type':['INSERT', 'UPDATE', 'DELETE'], 
+#         'no_pk':False, 'flashback':False, 'back_interval':1.0}
 
-'''
+#     conn_setting = {'host': args['host'], 'port': args['port'], 'user': args['user'], 'passwd': args['password'], 'charset': 'utf8'}
+#     print(conn_setting)
+#     binlog2sql = Binlog2sql(connection_settings=conn_setting, start_file=args['start_file'], start_pos=args['start_pos'],
+#                             end_file=args['end_file'], end_pos=args['end_pos'], start_time=args['start_time'],
+#                             stop_time=args['stop_time'], only_schemas=args['databases'], only_tables=args['tables'],
+#                             no_pk=args['no_pk'], flashback=args['flashback'], stop_never=args['stop_never'],
+#                             back_interval=args['back_interval'], only_dml=args['only_dml'], sql_type=args['sql_type'])
+#     print("binlog2sql_process_binlog")
+#     binlog2sql.process_binlog()
+

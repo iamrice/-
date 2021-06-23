@@ -188,6 +188,8 @@ def concat_sql_from_binlog_event(cursor, binlog_event, row=None, e_start_pos=Non
 
     if isinstance(binlog_event, WriteRowsEvent) or isinstance(binlog_event, DeleteRowsEvent):
         print(row['values'])
+        #print(row['values']['start_time'])
+        #print((row['values']['start_time']).strftime('%Y-%m-%d'))
     if isinstance(binlog_event, UpdateRowsEvent):
         print(row['before_values'],row['after_values'])
 
