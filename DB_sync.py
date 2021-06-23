@@ -9,7 +9,21 @@ def get_binlog_parser(host='localhost',port='3306',user='root',password='root',d
 		Return:
 			1. parser
 	'''
-	pass
+	args = {'host':host, 'user':user, 'password':password, 'port':port, 
+	'start_file':'mysql-bin.000001', 'start_pos':4, 'end_file':'', 'end_pos':0, 
+	'start_time':'', 'stop_time':'', 'stop_never':False, 'help':False, 
+	'databases':[database], 'tables':[table], 'only_dml':False, 
+	'sql_type':['INSERT', 'UPDATE', 'DELETE'], 
+	'no_pk':False, 'flashback':False, 'back_interval':1.0}
+
+	conn_setting = {'host': args['host'], 'port': args['port'], 'user': args['user'], 'passwd': args['password'], 'charset': 'utf8'}
+
+	binlog2sql = Binlog2sql(connection_settings=conn_setting, start_file=args['start_file'], start_pos=args['start_pos'],
+	                    end_file=args['end_file'], end_pos=args['end_pos'], start_time=args['start_time'],
+	                    stop_time=args['stop_time'], only_schemas=args['databases'], only_tables=args['tables'],
+	                    no_pk=args['no_pk'], flashback=args['flashback'], stop_never=args['stop_never'],
+	                    back_interval=args['back_interval'], only_dml=args['only_dml'], sql_type=args['sql_type'])
+	return binlog2sql;
 
 def check_binlog_update(parser, end_pos):
 	'''
@@ -98,8 +112,37 @@ def sync_to_target_db(update_unit, target_db):
 			2. target_db
 		Return:
 			none
-	'''
-	pass
+	'''    
+    updateItem = []
+    updateContent = []
+
+    if update_unit['type'] == 'update':
+        updateItems = update_unit['update_items']
+        updateContent = update_unit['update_content']
+        for i in updateItems:
+            for j in updateContent:
+                cond = updateContent[j]
+                target_db.pgsUpdate(j,(cond,i))
+
+    elif update_unit['type'] == 'insert':
+        updateItem = update_unit['update_items']
+        paramsTemp = []
+        for i in updateItem:
+            value = ""
+            if i == "course_start_time" or i == "course_end_time": 
+                value = updateItem[i].strftime('%Y-%m-%d')
+            else:
+                value = updateItem[i]
+            paramsTemp.append(value)
+        params = tuple(paramsTemp)
+        target_db.pgsInsert(params)
+
+    else update_unit['type'] == 'delete':
+        updateContent = update_unit['update_content']
+        for i in updateContent:
+            target_db.pgsDelete(i)
+
+
 
 def Exit(source_db):
 	'''
