@@ -186,12 +186,12 @@ def concat_sql_from_binlog_event(cursor, binlog_event, row=None, e_start_pos=Non
             sql = 'USE {0};\n'.format(binlog_event.schema)
         sql += '{0};'.format(fix_object(binlog_event.query))
 
-    if isinstance(binlog_event, WriteRowsEvent) or isinstance(binlog_event, DeleteRowsEvent):
-        print(row['values'])
-        #print(row['values']['start_time'])
-        #print((row['values']['start_time']).strftime('%Y-%m-%d'))
-    if isinstance(binlog_event, UpdateRowsEvent):
-        print(row['before_values'],row['after_values'])
+    # if isinstance(binlog_event, WriteRowsEvent) or isinstance(binlog_event, DeleteRowsEvent):
+    #     print(row['values'])
+    #     #print(row['values']['start_time'])
+    #     #print((row['values']['start_time']).strftime('%Y-%m-%d'))
+    # if isinstance(binlog_event, UpdateRowsEvent):
+    #     print(row['before_values'],row['after_values'])
 
     return sql
 

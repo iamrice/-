@@ -2,8 +2,8 @@ import psycopg2
 
 class postgresql_operator:
 
-    def __init__(self):
-        self.conn = psycopg2.connect(database="postgres", user="postgres", password="123", host="127.0.0.1", port="5432")
+    def __init__(self,database="postgres", user="postgres", password="123", host="127.0.0.1", port="5432"):
+        self.conn = psycopg2.connect(database=database, user=user, password=password, host=host, port=port)
         #test 用于测试连接成功 以下可删除
         cursor = self.conn.cursor()
         sql = "SELECT VERSION()"

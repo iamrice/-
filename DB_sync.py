@@ -1,5 +1,11 @@
+from binlog2sql import Binlog2sql
+from pymysqlreplication.row_event import (
+    WriteRowsEvent,
+    UpdateRowsEvent,
+    DeleteRowsEvent,
+)
 
-def get_binlog_parser(host='localhost',port='3306',user='root',password='root',database='',table=''):
+def get_binlog_parser(host='localhost',port=3306,user='root',password='root',database=[],table=[]):
 	'''
 		TODO:
 			1. 查找最新的一个 binlog 文件
@@ -12,7 +18,7 @@ def get_binlog_parser(host='localhost',port='3306',user='root',password='root',d
 	args = {'host':host, 'user':user, 'password':password, 'port':port, 
 	'start_file':'mysql-bin.000001', 'start_pos':4, 'end_file':'', 'end_pos':0, 
 	'start_time':'', 'stop_time':'', 'stop_never':False, 'help':False, 
-	'databases':[database], 'tables':[table], 'only_dml':False, 
+	'databases':database, 'tables':table, 'only_dml':False, 
 	'sql_type':['INSERT', 'UPDATE', 'DELETE'], 
 	'no_pk':False, 'flashback':False, 'back_interval':1.0}
 
@@ -36,7 +42,7 @@ def check_binlog_update(parser, end_pos):
 			1. 如果文件相比上一次有所变动，则返回当前文件大小
 			2. 如果没有变动，则返回 0
 	'''
-	pass
+	return 1
 
 def parse_binlog(parser, start_pos, end_pos):
 	'''
@@ -58,9 +64,9 @@ def parse_binlog(parser, start_pos, end_pos):
 	events = parser.process_binlog()
 	for binlog_event,row in events:
 		if isinstance(binlog_event, WriteRowsEvent):
-			modify_units.append({'modify_type':'INSERT','values':row['after_values']})
+			modify_units.append({'modify_type':'INSERT','after_values':row['values']})
 		if isinstance(binlog_event, DeleteRowsEvent):
-			modify_units.append({'modify_type':'DELETE','values':row['before_values']})
+			modify_units.append({'modify_type':'DELETE','before_values':row['values']})
 		if isinstance(binlog_event, UpdateRowsEvent):
 			modify_units.append({'modify_type':'UPDATE','before_values':row['before_values'],'after_values':row['after_values']})
 
@@ -98,10 +104,13 @@ def filter_sync_content(rule, modify_unit, target_db):
 		update_items = target_db.select(search_query)
 
 	if modify_unit['modify_type']=='INSERT' or modify_unit['modify_type']=='UPDATE':
-		for source_key,target_key in rule['search_keys'].items():
+		for source_key,target_key in rule['update_keys'].items():
 			update_content[target_key] = modify_unit['after_values'][source_key]
  
-	return {'type':modify_unit['modify_type'],'update_items':update_items,'update_content':update_content}
+	if modify_unit['modify_type']!='UPDATE' and rule['update_only']==True:
+		return 0
+	else:
+		return {'type':modify_unit['modify_type'],'update_items':update_items,'update_content':update_content}
 
 def sync_to_target_db(update_unit, target_db):
 	'''
@@ -117,15 +126,15 @@ def sync_to_target_db(update_unit, target_db):
 	updateItem = []
 	updateContent = []
 
-	if update_unit['type'] == 'update':
+	if update_unit['type'] == 'UPDATE':
 		updateItems = update_unit['update_items']
 		updateContent = update_unit['update_content']
 		for i in updateItems:
-		for j in updateContent:
-			cond = updateContent[j]
+			for j in updateContent:
+				cond = updateContent[j]
 				target_db.pgsUpdate(j,(cond,i))
 
-	elif update_unit['type'] == 'insert':
+	elif update_unit['type'] == 'INSERT':
 		updateItem = update_unit['update_items']
 		paramsTemp = []
 		for i in updateItem:
@@ -133,7 +142,7 @@ def sync_to_target_db(update_unit, target_db):
 		params = tuple(paramsTemp)
 		target_db.pgsInsert(params)
 
-	else update_unit['type'] == 'delete':
+	elif update_unit['type'] == 'DELETE':
 		updateContent = update_unit['update_content']
 		for i in updateContent:
 			target_db.pgsDelete(i)
@@ -165,18 +174,31 @@ from postgresql_operator import postgresql_operator
 
 def main():
 	# 初始化解析器、操作器
-	parser = get_binlog_parser()
-	target_db = postgresql_operator()
+	parser = get_binlog_parser('localhost',3306,'root','root',['db01'],['course','teacher'])
+	target_db = postgresql_operator(password='Aa15816601051')
 	source_db = mysql_operator()
 	# 初始化同步规则(在1.0 版本只考虑一个规则，后续视情况拓展)
-	sync_rule = {'search_keys':[],'update_keys':[]} # e.g. {'search_keys':[{'course':'myCourse'}],update_keys:[{'time':'course_time'}]} 每一个键值对的键代表源端的key，值代表目标端的key
+	# e.g. {'search_keys':[{'course':'myCourse'}],update_keys:[{'time':'course_time'}]} 每一个键值对的键代表源端的key，值代表目标端的key
+	sync_rule = [{
+				'sourse_table':'course',
+				'target_table':'senior_course',
+				'update_only':False,
+				'search_keys':{'id':'course_id'},
+				'update_keys':{'name':'course_name','start_time':'course_start_time','end_time':'course_end_time','teacher_id':'teacher_id'}
+				},{				
+				'sourse_table':'teacher',
+				'target_table':'senior_course',
+				'update_only':True,
+				'search_keys':{'id':'teacher_id'},
+				'update_keys':{'name':'teacher_name','introduction':'teacher_introduction','photo':'teacher_photo'}				
+				}]
+
+	
 	# 初始化读取位置
 	start_pos = 0
 	end_pos = 0
 	# 初始化同步间隔(ms)
 	sync_interval = 600
-
-
 
 	# 定时版本：定时同步
 	print("\n")
@@ -197,13 +219,17 @@ def main():
 				start_pos = end_pos
 				end_pos = check_value
 				modify_units = parse_binlog(parser, start_pos, end_pos)
+				# print('modify_units',modify_units)
 				# 过滤,同步
 				for unit in modify_units:
-					update_unit = filter_sync_content(sync_rule,unit,target_db)
-					sync_to_target_db(update_unit,target_db)
+					for rule in sync_rule:
+						update_unit = filter_sync_content(rule,unit,target_db)
+						if update_unit!=0:
+							print('update_unit',update_unit)
+							sync_to_target_db(update_unit,target_db)
 
 			# 等待下一次查询
-			time.sleep(sync_interval)
+			# time.sleep(sync_interval)
 		else:
 			break;
 		Exit(source_db)
