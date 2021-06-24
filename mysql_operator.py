@@ -55,7 +55,7 @@ def check_binlog_update(parser, end_pos):
 			1. 如果文件相比上一次有所变动，则返回当前文件大小
 			2. 如果没有变动，则返回 0
 	'''
-	sql = "show master logs"
+	sql = "show master status"
 	cursor = parser.connection.cursor()
 	#cursor = parser.conn.cursor()
 	cursor.execute(sql)
