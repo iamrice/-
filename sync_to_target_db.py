@@ -17,7 +17,7 @@ def sync_to_target_db(update_unit, target_db):
         for i in updateItems:
             for j in updateContent:
                 cond = updateContent[j]
-                    target_db.pgsUpdate(j,(cond,i))
+                target_db.pgsUpdate(j,(cond,i))
 
     elif update_unit['type'] == 'insert':
         updateItem = update_unit['update_items']
@@ -27,7 +27,7 @@ def sync_to_target_db(update_unit, target_db):
         params = tuple(paramsTemp)
         target_db.pgsInsert(params)
 
-    else update_unit['type'] == 'delete':
+    else:
         updateContent = update_unit['update_content']
         for i in updateContent:
             target_db.pgsDelete(i)
