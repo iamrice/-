@@ -15,9 +15,9 @@ def sync_to_target_db(update_unit, target_db):
         updateItems = update_unit['update_items']
         updateContent = update_unit['update_content']
         for i in updateItems:
-        for j in updateContent:
-            cond = updateContent[j]
-                target_db.pgsUpdate(j,(cond,i))
+            for j in updateContent:
+                cond = updateContent[j]
+                    target_db.pgsUpdate(j,(cond,i))
 
     elif update_unit['type'] == 'insert':
         updateItem = update_unit['update_items']
