@@ -16,7 +16,7 @@ class postgresql_operator:
         向表中插入一行数据
         """
         cursor = self.conn.cursor()
-        sql ="""INSERT INTO student (id, address) VALUES (%s, %s)"""
+        sql ="""INSERT INTO senior_course (course_id, teacher_id,course_name,course_start_time,course_end_time,teacher_name,teacher_photo,teacher_introduction) VALUES (%s, %s, %s, %s, %s, %s,%s, %s)"""
         try:
             cursor.execute(sql,params)
             self.conn.commit()
@@ -29,12 +29,11 @@ class postgresql_operator:
         读取目标表中所有数据
         """
         cursor = self.conn.cursor()
-        sql = """SELECT * from student """
+        sql = """SELECT * from senior_course """
         try:
             cursor.execute(sql)
             data = cursor.fetchall()
-            print(data)
-            #return data
+            return data
         except psycopg2.Error as e:
             print(e)
         
@@ -44,19 +43,18 @@ class postgresql_operator:
         按primary key 查询
         """
         cursor = self.conn.cursor()
-        sql = """SELECT * from student where id = %s"""#senior_course course_id
+        sql = """SELECT * from senior_course where course_id = %s"""#senior_course course_id
         try:
             cursor.execute(sql,params)
             data = cursor.fetchall()
-            print(data)
-            #return data
+            return data
         except psycopg2.Error as e:
             print(e)
 
     def pgsUpdate(self,cond,params):
         cursor = self.conn.cursor()
         #str = "address"
-        sql = """update student set """ + cond + """= %s where id = %s  """
+        sql = """update senior_course set """ + cond + """= %s where course_id = %s  """
         try:
             cursor.execute(sql,params)
             print("Updated successfully")
@@ -64,15 +62,15 @@ class postgresql_operator:
         except psycopg2.Error as e:
             print(e)
 
-    def pgsDelete(self,params):#params需写成（2，）加一个逗号这种形式
+    def pgsDelete(self,params):
         """
         按primary key删除相关所有行数据
         """
         cursor = self.conn.cursor()
         #str = "address"
-        sql = """delete from student where id = %s"""
+        sql = """delete from senior_course where course_id = """ + params
         try:
-            cursor.execute(sql,params)
+            cursor.execute(sql)
             print("Deleted successfully")
             self.conn.commit()
         except psycopg2.Error as e:
@@ -83,11 +81,11 @@ class postgresql_operator:
         获取表中元素行数
         """
         cursor = self.conn.cursor()
-        sql ="""select * from student"""
+        sql ="""select * from senior_course"""
         cursor.execute(sql)
         count = cursor.rowcount
-        print(count)
-        #return count
+        #print(count)
+        return count
 
     def __del__(self):
         """
