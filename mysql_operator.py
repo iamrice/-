@@ -59,8 +59,8 @@ def check_binlog_update(parser, end_pos):
 	cursor = parser.connection.cursor()
 	#cursor = parser.conn.cursor()
 	cursor.execute(sql)
-	file_s = cursor.fetchall()
-	file_size = file_s[0][1]
+	binlog_tuple = cursor.fetchall()
+	file_size = binlog_tuple[0][1]
 	#print(file_size)
 	if file_size > end_pos:
 		return file_size
