@@ -18,7 +18,7 @@
 | end_time           | private_data    | teacher_photo            |
 | teacher_id         |                 | teacher_name             |
 |                    |                 | teacher_id               |
-|                    |                 | teacher_intro            |
+|                    |                 | teacher_introduction     |
 
 #### Usage
 
@@ -35,6 +35,18 @@ source xxx\demo_source.sql; # xxx 替换为项目路径
 
 ```
 psql -U 用户名 数据库名< xxx\demo_target.sql # xxx 替换为项目路径
+```
+
+##### 配置python 环境
+
+```
+pip install -r requirement.txt
+```
+
+##### 测试
+
+```
+python DB_sync.py
 ```
 
 
