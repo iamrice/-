@@ -50,22 +50,24 @@ class Binlog2sql(object):
             self.eof_file, self.eof_pos = cursor.fetchone()[:2]
             cursor.execute("SHOW MASTER LOGS")
             bin_index = [row[0] for row in cursor.fetchall()]
+            print(bin_index)
             if self.start_file not in bin_index:
                 raise ValueError('parameter error: start_file %s not in mysql server' % self.start_file)
             binlog2i = lambda x: x.split('.')[1]
             for binary in bin_index:
                 if binlog2i(self.start_file) <= binlog2i(binary) <= binlog2i(self.end_file):
                     self.binlogList.append(binary)
+            print(self.binlogList)
 
             cursor.execute("SELECT @@server_id")
             self.server_id = cursor.fetchone()[0]
             if not self.server_id:
                 raise ValueError('missing server_id in %s:%s' % (self.conn_setting['host'], self.conn_setting['port']))
 
-    def process_binlog(self):
+    def process_binlog(self,log_file,log_pos):
         dml_events = []
         stream = BinLogStreamReader(connection_settings=self.conn_setting, server_id=self.server_id,
-                                    log_file=self.start_file, log_pos=self.start_pos, only_schemas=self.only_schemas,
+                                    log_file=log_file, log_pos=log_pos, only_schemas=self.only_schemas,
                                     only_tables=self.only_tables, resume_stream=True, blocking=True)
 
         flag_last_event = False

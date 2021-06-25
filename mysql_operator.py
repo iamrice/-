@@ -8,8 +8,8 @@ class mysql_operator:
 			1. 构造函数：创建数据库连接
 			2. flush binlog
 	'''
-	def __init__(self):
-		self.conn=pymysql.connect(host = 'localhost',user = 'root',passwd='6002920.Qy',port = 3306,database = 'test_db')
+	def __init__(self,host = 'localhost',user = 'root',passwd='6002920.Qy',port = 3306,database = 'test_db'):
+		self.conn=pymysql.connect(host =host,user =user,passwd=passwd,port =port,database = database)
 
 	def flush_binlog(self):
 		cursor = self.conn.cursor()
@@ -44,7 +44,7 @@ def Exit(source_db):
 
     
 
-def check_binlog_update(parser, end_pos):
+def check_binlog_update(mysql_operator):
 	'''
 		TODO:
 			1. 检查 binlog 文件大小是否大于 end_pos
@@ -56,16 +56,17 @@ def check_binlog_update(parser, end_pos):
 			2. 如果没有变动，则返回 0
 	'''
 	sql = "show master status"
-	cursor = parser.connection.cursor()
+	cursor = mysql_operator.conn.cursor()
 	#cursor = parser.conn.cursor()
 	cursor.execute(sql)
 	binlog_tuple = cursor.fetchall()
 	file_size = binlog_tuple[0][1]
-	#print(file_size)
-	if file_size > end_pos:
-		return file_size
-	else:
-		return 0
+	return [binlog_tuple[0][0],binlog_tuple[0][1]]
+	# print(binlog_tuple,file_size)
+	# if file_size > end_pos:
+	# 	return file_size
+	# else:
+	# 	return 0
 
 
 

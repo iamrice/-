@@ -1,11 +1,14 @@
 from binlog2sql import Binlog2sql
+from mysql_operator import mysql_operator, Exit, check_binlog_update
+import time
+from postgresql_operator import postgresql_operator,sync_to_target_db
 from pymysqlreplication.row_event import (
     WriteRowsEvent,
     UpdateRowsEvent,
     DeleteRowsEvent,
 )
 
-def get_binlog_parser(host='localhost',port=3306,user='root',password='root',database=[],table=[]):
+def get_binlog_parser(host='localhost',port=3306,user='root',password='root',database=[],table=[],log_file='mysql-bin.000001'):
 	'''
 		TODO:
 			1. 查找最新的一个 binlog 文件
@@ -16,7 +19,7 @@ def get_binlog_parser(host='localhost',port=3306,user='root',password='root',dat
 			1. parser
 	'''
 	args = {'host':host, 'user':user, 'password':password, 'port':port, 
-	'start_file':'mysql-bin.000001', 'start_pos':4, 'end_file':'', 'end_pos':0, 
+	'start_file':log_file, 'start_pos':4, 'end_file':'', 'end_pos':0, 
 	'start_time':'', 'stop_time':'', 'stop_never':False, 'help':False, 
 	'databases':database, 'tables':table, 'only_dml':False, 
 	'sql_type':['INSERT', 'UPDATE', 'DELETE'], 
@@ -31,20 +34,8 @@ def get_binlog_parser(host='localhost',port=3306,user='root',password='root',dat
 	                    back_interval=args['back_interval'], only_dml=args['only_dml'], sql_type=args['sql_type'])
 	return binlog2sql;
 
-def check_binlog_update(parser, end_pos):
-	'''
-		TODO:
-			1. 检查 binlog 文件大小是否大于 end_pos
-		Args:
-			1. parser: binlog 解析器
-			2. end_pos
-		Return:
-			1. 如果文件相比上一次有所变动，则返回当前文件大小
-			2. 如果没有变动，则返回 0
-	'''
-	return 1
 
-def parse_binlog(parser, start_pos, end_pos):
+def parse_binlog(parser, start_pos, log_file):
 	'''
 		TODO:
 			1. 使用 parser 获取数据库更新的内容
@@ -60,10 +51,12 @@ def parse_binlog(parser, start_pos, end_pos):
 			一个数组，数组的成员是 modify_unit
 			modify_unit定义为 {'modify_type': INSERT/DELETE/UPDATE, 'content': [...#该表项的所有内容]}
 	'''
+	# parser.start_pos=start_pos
+	#parser.end_pos=end_pos
 	modify_units = []
-	events = parser.process_binlog()
+	events = parser.process_binlog(log_file=log_file,log_pos=start_pos)
 	for binlog_event,row in events:
-		#print(binlog_event.table,row)
+		print(binlog_event.table,row)
 		#input()
 		if isinstance(binlog_event, WriteRowsEvent):
 			modify_units.append({'table':binlog_event.table,'modify_type':'INSERT','after_values':row['values']})
@@ -109,7 +102,7 @@ def filter_sync_content(rule, modify_unit, target_db):
 				else:
 					search_query += ' and '
 				# print(modify_unit)
-				search_query += target_key + ' = ' + modify_unit['before_values'][source_key]
+				search_query += target_key + ' = ' + str(modify_unit['before_values'][source_key])
 			update_items = target_db.pgsSelect(search_query)
 
 		if modify_unit['modify_type']=='INSERT' or modify_unit['modify_type']=='UPDATE':
@@ -128,81 +121,16 @@ def filter_sync_content(rule, modify_unit, target_db):
 
 		return {'type':'UPDATE','update_items':update_items,'update_content':update_content}
 
-import datetime
-
-def sync_to_target_db(update_unit, target_db):
-	'''
-		TODO:
-			1. 将内容更新至目标端
-		Args:
-			1. update_unit
-			2. target_db
-		Return:
-			none
-	'''    
-
-	updateItem = []
-	updateContent = []
-
-	if update_unit['type'] == 'UPDATE':
-		updateItems = update_unit['update_items']
-		updateContent = update_unit['update_content']
-		for i in updateItems:
-			for j in updateContent:
-				cond = updateContent[j]
-				target_db.pgsUpdate(j,(cond,i))
-
-	elif update_unit['type'] == 'INSERT':
-		updateContent = update_unit['update_content']
-		# paramsTemp = []
-		# for i in updateItem:
-		# 	paramsTemp.append(updateItem[i])
-		# params = tuple(paramsTemp)
-		content=[]
-		for v in updateContent.values():
-			if isinstance(v,int):
-				content.append(str(v))
-			elif isinstance(v,str):
-				content.append("'"+v+"'")
-			elif isinstance(v,datetime.date):
-				content.append("'"+str(v)+"'")
-		target_db.pgsInsert(','.join(list(updateContent.keys())),','.join(content))
-
-	elif update_unit['type'] == 'DELETE':
-		updateContent = update_unit['update_content']
-		for i in updateContent:
-			target_db.pgsDelete(i)
-
-
-def Exit(source_db):
-	'''
-		TODO:
-			通过 flush log 命令刷新 binlog，使得下一次访问时 binlog 是一个全新的日志文件。
-		Args:
-			none
-		Return:
-			none
-	'''
-	pass
-
-
-class mysql_operator:
-	'''
-		TODO:
-			实现两个函数
-			1. 构造函数：创建数据库连接
-			2. flush binlog
-	'''
-	pass
-
-import time
-from postgresql_operator import postgresql_operator
 
 def main():
 	# 初始化解析器、操作器
-	parser = get_binlog_parser('localhost',3306,'root','root',['db01'],['course','teacher'])
 	target_db = postgresql_operator(password='Aa15816601051')
-	source_db = mysql_operator()
+	source_db = mysql_operator(passwd='root',database='db01')
+
+	[file,length] = check_binlog_update(source_db)
+	print(file,length)
+	parser = get_binlog_parser('localhost',3306,'root','root',['db01'],['course','teacher'],file)
+
 	# 初始化同步规则(在1.0 版本只考虑一个规则，后续视情况拓展)
 	# e.g. {'search_keys':[{'course':'myCourse'}],update_keys:[{'time':'course_time'}]} 每一个键值对的键代表源端的key，值代表目标端的key
 	sync_rule = [{
@@ -224,11 +152,10 @@ def main():
 	
 	# 初始化读取位置
 	start_pos = 0
-	end_pos = 0
+	end_pos = 4
 	# 初始化同步间隔(ms)
 	sync_interval = 600
 
-	# 定时版本：定时同步
 	print("\n")
 	print("WELCOME TO THE DATABASE SYNCHRONIZATION TOOL!")
 	print("You can enter 'help' to get the usage of all the commands.\n")
@@ -241,13 +168,14 @@ def main():
 			print("exit   ---   exit the tool ")
 
 		elif com == "run":
-			check_value = check_binlog_update(parser, end_pos)
-			if(check_value > 0):
+			[file,length] = check_binlog_update(source_db)
+			if(length > end_pos):
 				# 解析更新内容
 				start_pos = end_pos
-				end_pos = check_value
-				modify_units = parse_binlog(parser, start_pos, end_pos)
-				# print('modify_units',modify_units)
+				end_pos = length
+				print('file_pos',start_pos,end_pos)
+				modify_units = parse_binlog(parser, start_pos, file)
+				print('modify_units',modify_units)
 				# 过滤,同步
 				for unit in modify_units:
 					for rule in sync_rule:
@@ -255,12 +183,10 @@ def main():
 						if update_unit!=0:
 							print('update_unit',update_unit)
 							sync_to_target_db(update_unit,target_db)
-
-			# 等待下一次查询
-			# time.sleep(sync_interval)
 		else:
 			break;
-		Exit(source_db)
+	
+	Exit(source_db)
 
 
 if __name__ == '__main__':

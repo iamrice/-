@@ -99,3 +99,48 @@ class postgresql_operator:
         """
         self.conn.close()
 
+import datetime
+
+
+def sync_to_target_db(update_unit, target_db):
+    '''
+        TODO:
+            1. 将内容更新至目标端
+        Args:
+            1. update_unit
+            2. target_db
+        Return:
+            none
+    '''    
+
+    updateItem = []
+    updateContent = []
+
+    if update_unit['type'] == 'UPDATE':
+        updateItems = update_unit['update_items']
+        updateContent = update_unit['update_content']
+        for i in updateItems:
+            for j in updateContent:
+                cond = updateContent[j]
+                target_db.pgsUpdate(j,(cond,i))
+
+    elif update_unit['type'] == 'INSERT':
+        updateContent = update_unit['update_content']
+        # paramsTemp = []
+        # for i in updateItem:
+        #   paramsTemp.append(updateItem[i])
+        # params = tuple(paramsTemp)
+        content=[]
+        for v in updateContent.values():
+            if isinstance(v,int):
+                content.append(str(v))
+            elif isinstance(v,str):
+                content.append("'"+v+"'")
+            elif isinstance(v,datetime.date):
+                content.append("'"+str(v)+"'")
+        target_db.pgsInsert(','.join(list(updateContent.keys())),','.join(content))
+
+    elif update_unit['type'] == 'DELETE':
+        updateContent = update_unit['update_content']
+        for i in updateContent:
+            target_db.pgsDelete(i)
