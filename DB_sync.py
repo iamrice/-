@@ -136,9 +136,7 @@ def main():
 	sync_rule = [{
 				'sourse_table':'course',
 				'target_table':'senior_course',
-				'action':['UPDATE',
-						'INSERT',
-						'DELETE'],
+				'action':['UPDATE',	'INSERT','DELETE'],
 				'search_keys':{'id':'course_id'},
 				'update_keys':{'id':'course_id','name':'course_name','start_time':'course_start_time','end_time':'course_end_time','teacher_id':'teacher_id'}
 				},{				
@@ -173,9 +171,9 @@ def main():
 				# 解析更新内容
 				start_pos = end_pos
 				end_pos = length
-				print('file_pos',start_pos,end_pos)
+				# print('file_pos',start_pos,end_pos)
 				modify_units = parse_binlog(parser, start_pos, file)
-				print('modify_units',modify_units)
+				# print('modify_units',modify_units)
 				# 过滤,同步
 				for unit in modify_units:
 					for rule in sync_rule:

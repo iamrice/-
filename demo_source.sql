@@ -32,7 +32,7 @@ CREATE TABLE `course` (
   PRIMARY KEY (`id`),
   KEY `teacher` (`teacher_id`),
   CONSTRAINT `teacher` FOREIGN KEY (`teacher_id`) REFERENCES `teacher` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +41,7 @@ CREATE TABLE `course` (
 
 LOCK TABLES `course` WRITE;
 /*!40000 ALTER TABLE `course` DISABLE KEYS */;
-INSERT INTO `course` VALUES (1,'Math','senior',1,'2021-09-01','2022-01-30'),(2,'Physic','senior',1,'2021-09-01','2022-01-30'),(3,'English','senior',2,'2021-09-01','2022-01-30'),(4,'Computer Science','senior',3,'2021-09-01','2022-01-30'),(5,'English','junior',2,'2021-09-01','2022-01-30'),(6,'Computer Science','junior',3,'2021-09-01','2022-01-30');
+INSERT INTO `course` VALUES (1,'Math','fresh',1,'2015-09-05','2022-01-30'),(2,'Physic','senior',1,'2035-09-06','2022-01-30'),(3,'English','senior',2,'2023-09-06','2022-01-30'),(4,'Computer Science','senior',3,'2021-09-01','2022-01-30'),(5,'English','junior',2,'2021-09-01','2022-01-30'),(6,'Computer Science','junior',3,'2021-09-01','2022-01-30'),(7,'Computer Science','junior',3,'2022-09-01','2023-01-30');
 /*!40000 ALTER TABLE `course` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -81,4 +81,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-06-20 13:32:41
+-- Dump completed on 2021-06-25 21:04:10
