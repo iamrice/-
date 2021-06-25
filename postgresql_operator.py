@@ -3,6 +3,8 @@ import psycopg2
 class postgresql_operator:
 
     def __init__(self,database="postgres", user="postgres", password="123", host="127.0.0.1", port="5432"):
+        self.primary_key='course_id'
+        self.table='senior_course'
         self.conn = psycopg2.connect(database=database, user=user, password=password, host=host, port=port)
         #test 用于测试连接成功 以下可删除
         cursor = self.conn.cursor()
@@ -11,12 +13,14 @@ class postgresql_operator:
         data = cursor.fetchone()
         print("database version : %s " % data)
     
-    def pgsInsert(self,params):
+    def pgsInsert(self,keys,params):
         """
         向表中插入一行数据
         """
         cursor = self.conn.cursor()
-        sql ="""INSERT INTO senior_course (course_id, teacher_id,course_name,course_start_time,course_end_time,teacher_name,teacher_photo,teacher_introduction) VALUES (%s, %s, %s, %s, %s, %s,%s, %s)"""
+        # print(keys,params)
+        sql ="""INSERT INTO senior_course ("""+keys+""") VALUES ("""+params+""")"""
+        # print(sql)
         try:
             cursor.execute(sql,params)
             self.conn.commit()
@@ -24,16 +28,17 @@ class postgresql_operator:
         except psycopg2.Error as e:
             print(e)
 
-    def pgsSelect(self):
+    def pgsSelect(self,sql = """SELECT * from senior_course """):
         """
         读取目标表中所有数据
         """
         cursor = self.conn.cursor()
-        sql = """SELECT * from senior_course """
+        # print(sql)
         try:
             cursor.execute(sql)
             data = cursor.fetchall()
-            return data
+            # print(data)
+            return list(map(lambda x:x[0],data))
         except psycopg2.Error as e:
             print(e)
         
@@ -44,10 +49,11 @@ class postgresql_operator:
         """
         cursor = self.conn.cursor()
         sql = """SELECT * from senior_course where course_id = %s"""#senior_course course_id
+
         try:
             cursor.execute(sql,params)
             data = cursor.fetchall()
-            return data
+            return list(map(lambda x:x[0],data))
         except psycopg2.Error as e:
             print(e)
 

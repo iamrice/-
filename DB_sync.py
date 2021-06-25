@@ -63,12 +63,14 @@ def parse_binlog(parser, start_pos, end_pos):
 	modify_units = []
 	events = parser.process_binlog()
 	for binlog_event,row in events:
+		#print(binlog_event.table,row)
+		#input()
 		if isinstance(binlog_event, WriteRowsEvent):
-			modify_units.append({'modify_type':'INSERT','after_values':row['values']})
+			modify_units.append({'table':binlog_event.table,'modify_type':'INSERT','after_values':row['values']})
 		if isinstance(binlog_event, DeleteRowsEvent):
-			modify_units.append({'modify_type':'DELETE','before_values':row['values']})
+			modify_units.append({'table':binlog_event.table,'modify_type':'DELETE','before_values':row['values']})
 		if isinstance(binlog_event, UpdateRowsEvent):
-			modify_units.append({'modify_type':'UPDATE','before_values':row['before_values'],'after_values':row['after_values']})
+			modify_units.append({'table':binlog_event.table,'modify_type':'UPDATE','before_values':row['before_values'],'after_values':row['after_values']})
 
 	return modify_units
 
@@ -88,29 +90,45 @@ def filter_sync_content(rule, modify_unit, target_db):
 			e.g.{type:'insert',update_items:[],update_content:{'course':'math','time':'monday'}}
 			e.g.{type:'delete',update_items:['001','008'],update_content:{}}
 	'''
+	if(rule['sourse_table']!=modify_unit['table']):
+		return 0
+	if(modify_unit['modify_type'] not in rule['action']):
+		return 0
+
 	update_items = []
 	update_content = {}
 
-	if modify_unit['modify_type']=='DELETE' or modify_unit['modify_type']=='UPDATE':
-		search_query = 'select ' + target_db.primary_key + ' from ' + target_db.table
-		first_item = True
-		for source_key,target_key in rule['search_keys'].items():
-			if first_item==True:
-				search_query += ' where '
-				first_item = False
-			else:
-				search_query += ' and '
-			search_query += target_key + ' = ' + modify_unit['before_values'][source_key]
-		update_items = target_db.select(search_query)
+	if modify_unit['table']=='course':
+		if modify_unit['modify_type']=='DELETE' or modify_unit['modify_type']=='UPDATE':
+			search_query = 'select ' + target_db.primary_key + ' from ' + target_db.table
+			first_item = True
+			for source_key,target_key in rule['search_keys'].items():
+				if first_item==True:
+					search_query += ' where '
+					first_item = False
+				else:
+					search_query += ' and '
+				# print(modify_unit)
+				search_query += target_key + ' = ' + modify_unit['before_values'][source_key]
+			update_items = target_db.pgsSelect(search_query)
 
-	if modify_unit['modify_type']=='INSERT' or modify_unit['modify_type']=='UPDATE':
+		if modify_unit['modify_type']=='INSERT' or modify_unit['modify_type']=='UPDATE':
+			for source_key,target_key in rule['update_keys'].items():
+				update_content[target_key] = modify_unit['after_values'][source_key]
+
+		return {'type':modify_unit['modify_type'],'update_items':update_items,'update_content':update_content}
+
+	elif modify_unit['table']=='teacher':
+		search_query = 'select ' + target_db.primary_key + ' from ' + target_db.table + ' where teacher_id=' + str(modify_unit['after_values']['id'] )
+		update_items = target_db.pgsSelect(search_query)
+		# print(search_query,update_items)
+
 		for source_key,target_key in rule['update_keys'].items():
 			update_content[target_key] = modify_unit['after_values'][source_key]
- 
-	if modify_unit['modify_type']!='UPDATE' and rule['update_only']==True:
-		return 0
-	else:
-		return {'type':modify_unit['modify_type'],'update_items':update_items,'update_content':update_content}
+
+		return {'type':'UPDATE','update_items':update_items,'update_content':update_content}
+
+import datetime
 
 def sync_to_target_db(update_unit, target_db):
 	'''
@@ -135,12 +153,20 @@ def sync_to_target_db(update_unit, target_db):
 				target_db.pgsUpdate(j,(cond,i))
 
 	elif update_unit['type'] == 'INSERT':
-		updateItem = update_unit['update_items']
-		paramsTemp = []
-		for i in updateItem:
-			paramsTemp.append(updateItem[i])
-		params = tuple(paramsTemp)
-		target_db.pgsInsert(params)
+		updateContent = update_unit['update_content']
+		# paramsTemp = []
+		# for i in updateItem:
+		# 	paramsTemp.append(updateItem[i])
+		# params = tuple(paramsTemp)
+		content=[]
+		for v in updateContent.values():
+			if isinstance(v,int):
+				content.append(str(v))
+			elif isinstance(v,str):
+				content.append("'"+v+"'")
+			elif isinstance(v,datetime.date):
+				content.append("'"+str(v)+"'")
+		target_db.pgsInsert(','.join(list(updateContent.keys())),','.join(content))
 
 	elif update_unit['type'] == 'DELETE':
 		updateContent = update_unit['update_content']
@@ -182,15 +208,17 @@ def main():
 	sync_rule = [{
 				'sourse_table':'course',
 				'target_table':'senior_course',
-				'update_only':False,
+				'action':['UPDATE',
+						'INSERT',
+						'DELETE'],
 				'search_keys':{'id':'course_id'},
-				'update_keys':{'name':'course_name','start_time':'course_start_time','end_time':'course_end_time','teacher_id':'teacher_id'}
+				'update_keys':{'id':'course_id','name':'course_name','start_time':'course_start_time','end_time':'course_end_time','teacher_id':'teacher_id'}
 				},{				
 				'sourse_table':'teacher',
 				'target_table':'senior_course',
-				'update_only':True,
+				'action':['UPDATE','INSERT'],
 				'search_keys':{'id':'teacher_id'},
-				'update_keys':{'name':'teacher_name','introduction':'teacher_introduction','photo':'teacher_photo'}				
+				'update_keys':{'id':'teacher_id','name':'teacher_name','introduction':'teacher_introduction','photo':'teacher_photo'}				
 				}]
 
 	
