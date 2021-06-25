@@ -1,2 +1,0 @@
-mysql-replication==0.13
-PyMySQL==0.9.3

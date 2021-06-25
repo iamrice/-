@@ -1,4 +1,0 @@
-整体项目分为以下
-
-对于postgresql数据库，我们希望通过python对数据库进行以下的几种操作，建立数据库连接，插入数据(Insert)，选择数据(select),更新数据(select),删除数据(delete),计算表中元素行数(rowcount),以及数据库的关闭连接。
-首先
